@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://wutongtree.github.io/funds/requirements/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+
+	<title>功能描述 - 基于Hyperledger的基金管理</title>
+
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link rel="stylesheet" href="../css/highlight.css">
+        <link href="../css/base.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="..">基于Hyperledger的基金管理</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            <!-- Main navigation -->
+            <ul class="nav navbar-nav">
+            
+            
+                <li >
+                    <a href="..">首页</a>
+                </li>
+            
+            
+            
+                <li class="active">
+                    <a href="./">功能描述</a>
+                </li>
+            
+            
+            
+                <li >
+                    <a href="../designs/">设计实现</a>
+                </li>
+            
+            
+            
+                <li >
+                    <a href="../deploy/">安装部署</a>
+                </li>
+            
+            
+            </ul>
+
+            <!-- Search, Navigation and Repo links -->
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                <li >
+                    <a rel="next" href="..">
+                        <i class="fa fa-arrow-left"></i> Previous
+                    </a>
+                </li>
+                <li >
+                    <a rel="prev" href="../designs/">
+                        Next <i class="fa fa-arrow-right"></i>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#_1">功能描述</a></li>
+        
+            <li><a href="#_2">用户角色</a></li>
+        
+            <li><a href="#_3">账户管理</a></li>
+        
+            <li><a href="#_4">交易管理</a></li>
+        
+            <li><a href="#_5">基金管理</a></li>
+        
+    
+    </ul>
+</div></div>
+            <div class="col-md-9" role="main">
+
+<h2 id="_1">功能描述</h2>
+<p>funds基于Hyperledger实现了一个基金的管理功能，主要的功能描述如下：</p>
+<h3 id="_2">用户角色</h3>
+<ul>
+<li>管理员</li>
+</ul>
+<p>管理员可以发布基金，设置基金用户的参与门槛：</p>
+<pre><code>- 资金量
+- 注册时间
+- 认购起点
+- 认购阶梯
+</code></pre>
+<ul>
+<li>普通用户</li>
+</ul>
+<p>普通用户可以参与基金的购买和赎回。</p>
+<h3 id="_3">账户管理</h3>
+<ul>
+<li>账户查询</li>
+</ul>
+<p>查询已登录账户的现金余额，充值和提现记录。</p>
+<ul>
+<li>账户充值</li>
+</ul>
+<p>对接支付宝等支付平台。</p>
+<ul>
+<li>账户提现</li>
+</ul>
+<p>可以把账户余额提现到银行卡。</p>
+<ul>
+<li>账户注册</li>
+</ul>
+<p>需要提供如下信息：</p>
+<pre><code>- 账号（账户登录名）
+- 昵称（账户显示用）
+- 登录密码（登录密码）
+- 交易密码（购买基金的时候需要）
+- 手机号（暂不认证）
+- 邮箱
+</code></pre>
+<ul>
+<li>账户注销</li>
+</ul>
+<p>账户余额不为0，不能注销。账户注销以后所以的交易信息都会被删除，无法进行查询。</p>
+<ul>
+<li>修改登录密码</li>
+</ul>
+<p>需要提供原来的登录密码，输入新的登录密码。</p>
+<h3 id="_4">交易管理</h3>
+<ul>
+<li>交易查询</li>
+</ul>
+<p>查询一年内的交易，包含的类型有：</p>
+<pre><code>- 已完成交易
+- 正在进行的交易
+- 已取消交易
+</code></pre>
+<ul>
+<li>交易取消</li>
+</ul>
+<p>取消正在进行的交易。</p>
+<h3 id="_5">基金管理</h3>
+<ul>
+<li>基金状态</li>
+</ul>
+<p>基金状态有：</p>
+<pre><code>- 生效（发布后就是生效状态，满足门槛的用户可以购买和赎回）
+- 暂停（处于暂停状态的基金，用户不能进行操作，但是可以查询相关信息）
+</code></pre>
+<ul>
+<li>基金类型</li>
+</ul>
+<p>基金类型有：</p>
+<pre><code>- 货币型
+</code></pre>
+<ul>
+<li>发布基金</li>
+</ul>
+<p>管理员可以发布新的基金，设置如下内容：</p>
+<pre><code>- 基金类型
+- 基金名称
+- 基金说明
+- 基金生效时间段（包括开始和接收时间）
+- 基金参与门槛（包括用户资金量、注册时间、认购起点、认购阶梯等）
+- 基金认购数量（每个用户最多购买的数量）
+- 基金管理员（发布基金的管理员是默认管理员，管理员可以对基金进行管理，也可以以任意价格扩股或者回购基金）
+</code></pre>
+<p>基金提交后默认的状态是生效状态。</p>
+<ul>
+<li>暂停/重启基金</li>
+</ul>
+<p>基金管理员可以暂停或者重启的基金。</p>
+<ul>
+<li>净值管理</li>
+</ul>
+<p>基金管理员可以调整基金的每日净值。</p>
+<ul>
+<li>基金消息发布</li>
+</ul>
+<p>基金管理员可以发布基金的消息，包括财报等。</p>
+<ul>
+<li>购买基金</li>
+</ul>
+<p>满足参与门槛的用户可以购买基金，购买基金需要提供的进行：</p>
+<pre><code>- 购买金额
+- 交易密码
+</code></pre>
+<p>操作成功后能够在交易管理里看到对应的信息。</p>
+<ul>
+<li>赎回基金</li>
+</ul>
+<p>已经购买的基金可以赎回，赎回基金需要提供的进行：</p>
+<pre><code>- 赎回数量
+- 交易密码
+</code></pre>
+<p>操作成功后能够在交易管理里看到对应的信息。</p>
+<ul>
+<li>基金净值走势图</li>
+</ul>
+<p>展示基金净值每日走势图，普通用户可以查看。</p>
+<ul>
+<li>基金市值走势图</li>
+</ul>
+<p>展示基金市值每日走势图，普通用户可以查看。</p></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+                <center>Copyright &copy; 2014-2016 <a href="https://wutongtree.com" target="_blank">wutongtree.com</a></center>
+            
+            <center>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</center>
+        </footer>
+
+        <script src="../js/jquery-1.10.2.min.js"></script>
+        <script src="../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../js/highlight.pack.js"></script>
+        <script>var base_url = '..';</script>
+        <script data-main="../mkdocs/js/search.js" src="../mkdocs/js/require.js"></script>
+        <script src="../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

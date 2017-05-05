@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        <link rel="canonical" href="https://wutongtree.github.io/funds/designs/">
+        <link rel="shortcut icon" href="../img/favicon.ico">
+
+	<title>设计实现 - 基于Hyperledger的基金管理</title>
+
+        <link href="../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../css/font-awesome-4.0.3.css" rel="stylesheet">
+        <link rel="stylesheet" href="../css/highlight.css">
+        <link href="../css/base.css" rel="stylesheet">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="..">基于Hyperledger的基金管理</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            <!-- Main navigation -->
+            <ul class="nav navbar-nav">
+            
+            
+                <li >
+                    <a href="..">首页</a>
+                </li>
+            
+            
+            
+                <li >
+                    <a href="../requirements/">功能描述</a>
+                </li>
+            
+            
+            
+                <li class="active">
+                    <a href="./">设计实现</a>
+                </li>
+            
+            
+            
+                <li >
+                    <a href="../deploy/">安装部署</a>
+                </li>
+            
+            
+            </ul>
+
+            <!-- Search, Navigation and Repo links -->
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                <li >
+                    <a rel="next" href="../requirements/">
+                        <i class="fa fa-arrow-left"></i> Previous
+                    </a>
+                </li>
+                <li >
+                    <a rel="prev" href="../deploy/">
+                        Next <i class="fa fa-arrow-right"></i>
+                    </a>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#_1">设计实现</a></li>
+        
+            <li><a href="#_2">架构设计</a></li>
+        
+            <li><a href="#_3">数据结构及流程</a></li>
+        
+            <li><a href="#app">APP接口设计</a></li>
+        
+            <li><a href="#hyperledger-api">Hyperledger API</a></li>
+        
+    
+    </ul>
+</div></div>
+            <div class="col-md-9" role="main">
+
+<h2 id="_1">设计实现</h2>
+<p>funds基于Hypperledger实现的基金管理，Hyperledger为我们提供了如下的功能：</p>
+<ul>
+<li>用户管理</li>
+</ul>
+<p>Hyperledger的membersrvc模块提供了基本的用户管理功能，基于PKI体系的用户系统保证了交易的安全性。用户管理本身采用配置文件进行初始化，我们会进行一些扩展。</p>
+<ul>
+<li>共识算法</li>
+</ul>
+<p>共识算法提供了在分布式环境下解决数据一致性问题的方法。</p>
+<ul>
+<li>区块链存储</li>
+</ul>
+<p>区块链存储把所有的交易结果都存储在区块链上，称为ledger，任何人都可以查询ledger上的信息。</p>
+<h3 id="_2">架构设计</h3>
+<p>架构设计包含三大部分：web client、App、Hyperledger。如下图</p>
+<p><img alt="fund架构图" src="../images/architecture.jpg" /></p>
+<p>web client：提供对外操作UI，实现user的输入输出简单处理后向App发送http request并接收response。</p>
+<p>App：连接client与Hyperledger的中间层，负责接收client的httprequest，将request数据整理打包后通过Hyperledger提供API发送给Hyperledger处理；Hyperledger处理完成后返回处理结果给App，并有App包装后返回给client。</p>
+<p>Hyperledger：基金管理系统底层区块链技术实现，提供memberSrv服务、peer共识服务、chaincode服务。负责执行交易并将交易相关信息保存于Ledger中。</p>
+<h3 id="_3">数据结构及流程</h3>
+<h4 id="_4">数据结构</h4>
+<ol>
+<li>基金基本信息：基金序号、基金名称、管理员</li>
+<li>基金净值：基金序号、净值</li>
+<li>系统全局量：基金序号、基金池容量、基金池中剩余基金数、系统资金量</li>
+<li>基金参与限制：基金序号、参与者资金量、参与者注册时间、认购起点</li>
+<li>基金认购限制：基金序号、认购单量、认购总量</li>
+<li>账户信息：账户证书、资金量、注册时间</li>
+<li>用户基金信息：账户证书、基金序号、所购基金份额</li>
+<li>排队信息：交易者证书、基金序号、交易额（认购或赎回）、申请时间</li>
+</ol>
+<p>以上数据结构对应的数据都通过chaincode操作并保存在block的worldstate里。另外，系统账户的注册由Hyperledger的membersrv服务实现。</p>
+<h4 id="_5">系统流程</h4>
+<p>如下图流程图内所展示的逻辑是在chaincode实现。</p>
+<p><img alt="流程" src="../images/flowchart.jpg" /></p>
+<h3 id="app">APP接口设计</h3>
+<p>App模块为web client提供REST API。</p>
+<h4 id="_6">登陆</h4>
+<p>Request：</p>
+<pre><code>POST http://203.12.202.133:9900/login
+{
+    &quot;enrollId&quot;:&quot;lukas&quot;,//用户名
+    &quot;enrollSecret&quot;: &quot;xoao&quot;,//密码
+}
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;xxx&quot;//错误信息
+}
+</code></pre>
+
+<h4 id="_7">创建基金</h4>
+<p>Request：</p>
+<pre><code>POST http://203.12.202.133:9900/create
+{
+    &quot;name&quot;: &quot;fundName&quot;,//基金名称
+    &quot;funds&quot;: 100,//初始基金数
+    &quot;assets&quot;: 100,//初始资金数
+    &quot;partnerAssets&quot;: 100,//注册资金
+    &quot;partnerTime&quot;: 100,//注册时间
+    &quot;buyStart&quot;: 100,//入购起点
+    &quot;buyPer&quot;: 100,//限购单量
+    &quot;buyAll&quot;: 100,//限购总量
+    &quot;net&quot;: 100//基金净值
+}
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;xxx&quot;//错误信息
+}
+</code></pre>
+
+<h4 id="_8">设置基金净值</h4>
+<p>Request：</p>
+<pre><code>POST http://203.12.202.133:9900/setnet
+{
+    &quot;name&quot;: &quot;fundName&quot;,//基金名称
+    &quot;net&quot;: 100//基金净值
+}
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;xxx&quot;//错误信息
+}
+</code></pre>
+
+<h4 id="_9">设置基金限制</h4>
+<p>Request：</p>
+<pre><code>POST http://203.12.202.133:9900/setlimit
+{
+    &quot;name&quot;: &quot;fundName&quot;,//基金名称
+    &quot;partnerAssets&quot;: 100,//注册资金
+    &quot;partnerTime&quot;: 100,//注册时间
+    &quot;buyStart&quot;: 100,//入购起点
+    &quot;buyPer&quot;: 100,//限购单量
+    &quot;buyAll&quot;: 100,//限购总量
+}
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;xxx&quot;//错误信息
+}
+</code></pre>
+
+<h4 id="_10">扩股回购</h4>
+<p>Request：</p>
+<pre><code>POST http://203.12.202.133:9900/setpool
+{
+    &quot;name&quot;: &quot;fundName&quot;,//基金名称
+    &quot;funds&quot;: 100,//扩股回购数，&gt;0扩股  &lt;0为回购
+}
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;xxx&quot;//错误信息
+}
+</code></pre>
+
+<h4 id="_11">认购赎回</h4>
+<p>Request：</p>
+<pre><code>POST http://203.12.202.133:9900/transfer
+{
+    &quot;enrollID&quot;:&quot;lukas&quot;,//用户ID
+    &quot;name&quot;: &quot;fundName&quot;,//基金名称
+    &quot;funds&quot;: 100,//认购赎回数，&gt;0认购  &lt;0为赎回
+}
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;xxx&quot;//错误信息
+}
+</code></pre>
+
+<h4 id="_12">根据基金名称查询基金信息</h4>
+<p>Request：</p>
+<pre><code>GET http://203.12.202.133:9900/fund/:name
+
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;{
+                &quot;name&quot;: &quot;fundName&quot;,//基金名称
+                &quot;funds&quot;: 100,//初始基金数
+                &quot;assets&quot;: 100,//初始资金数
+                &quot;partnerAssets&quot;: 100,//注册资金
+                &quot;partnerTime&quot;: 100,//注册时间
+                &quot;buyStart&quot;: 100,//入购起点
+                &quot;buyPer&quot;: 100,//限购单量
+                &quot;buyAll&quot;: 100,//限购总量
+                &quot;net&quot;: 100//基金净值
+            }&quot;//或错误信息
+}
+</code></pre>
+
+<h4 id="_13">查询所有基金信息</h4>
+<p>Request：</p>
+<pre><code>GET http://203.12.202.133:9900/funds
+
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;[{
+                &quot;name&quot;: &quot;fundName&quot;,//基金名称
+                &quot;funds&quot;: 100,//初始基金数
+                &quot;assets&quot;: 100,//初始资金数
+                &quot;partnerAssets&quot;: 100,//注册资金
+                &quot;partnerTime&quot;: 100,//注册时间
+                &quot;buyStart&quot;: 100,//入购起点
+                &quot;buyPer&quot;: 100,//限购单量
+                &quot;buyAll&quot;: 100,//限购总量
+                &quot;net&quot;: 100//基金净值
+    }]&quot;//或错误信息
+}
+</code></pre>
+
+<h4 id="_14">查询用户某一基金的信息</h4>
+<p>Request：</p>
+<pre><code>GET http://203.12.202.133:9900/user/:fundName/:enrollID
+
+</code></pre>
+
+<p>Response:</p>
+<pre><code>{
+    &quot;status&quot;: &quot;OK&quot;,//或者&quot;Err&quot;
+    &quot;msg&quot;: &quot;{
+                &quot;name&quot;: &quot;fundName&quot;,//基金名称
+                &quot;owner&quot;: 100,//用户名
+                &quot;assets&quot;: 100,//资金数
+                &quot;fund&quot;: 100,//基金数
+            }&quot;//或错误信息
+}
+</code></pre>
+
+<h3 id="hyperledger-api">Hyperledger API</h3>
+<h4 id="_15">初始化</h4>
+<p>Deploy Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;deploy&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 init
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Deploy Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_16">创建基金</h4>
+<p>Invoke Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;invoke&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“createFund“ 2、基金名称string  3、基金管理员  4、基金净值 5、基金池 6、系统资金 7、参与者资金量 8、参与者注册时间 9、认购起点 10、认购单量 11、认购总量 12、基金净值
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Invoke Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_17">设置基金净值</h4>
+<p>Invoke Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;invoke&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“setNet“ 2、基金名  3、净值int
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Invoke Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_18">设置基金池（扩股、回购）</h4>
+<p>Invoke Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;invoke&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“setFoundPool“ 2、基金名  3、扩股/回购数（&gt;0为扩股 &lt;0为回购）
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Invoke Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_19">基金交易（认购赎回）</h4>
+<p>Invoke Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;invoke&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“transferFound“ 2、基金ID  3、认购/赎回数（&gt;0为认购 &lt;0为赎回）
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Invoke Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot; //如果交易成功则为交易额（可能是部分交易完成），否则为错误信息
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_20">基金限制设置</h4>
+<p>Invoke Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;invoke&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“setFundLimit“ 2、基金名  3、参与者资金量 4、参与者注册时间 5、认购起点 6、认购单量 7、认购总量 
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Invoke Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot; //如果交易成功则为交易额（可能是部分交易完成），否则为错误信息
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_21">基金/列表信息查询</h4>
+<p>Query Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;query&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“getFund“ 2、one/list 3、基金ID（第二个参数为one时需要此参数） 
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Query Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot; //基金信息（包括所有基本信息的struct）
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_22">基金净值/列表查询</h4>
+<p>Query Request:</p>
+<pre><code>POST host:port/chaincode
+{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;method&quot;: &quot;query&quot;,
+    &quot;params&quot;: {
+        &quot;type&quot;: &quot;GOLANG&quot;,
+        &quot;chaincodeID&quot;: {
+            &quot;path&quot;: &quot;&quot;,
+            &quot;name&quot;: &quot;&quot;
+        },
+        &quot;ctorMsg&quot;: {
+            &quot;args&quot;: &quot;[][]byte{}&quot;//参数 1、“getFundList“ 2、one/list  3、基金ID
+        },
+        &quot;timeout&quot;: 0,
+        &quot;secureContext&quot;: &quot;string&quot;,
+        &quot;confidentialityLevel&quot;: 1,
+        &quot;metadata&quot;: &quot;[]byte {}&quot;,
+        &quot;attributes&quot;: &quot;[]string{}&quot;
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<p>Query Response:</p>
+<pre><code>{
+    &quot;jsonrpc&quot;: &quot;2.0&quot;,
+    &quot;result&quot;: {
+        &quot;status&quot;: &quot;ok&quot;,
+        &quot;message&quot;: &quot;xxxx&quot; //基金净值信息
+    },
+    &quot;id&quot;: {
+        &quot;StringValue&quot;: &quot;*string&quot;,
+        &quot;IntValue&quot;: &quot;*int64&quot;
+    }
+}
+</code></pre>
+
+<h4 id="_23">注册</h4>
+<p>Enrollment Request:</p>
+<pre><code>POST host:port/registrar
+
+{
+  &quot;enrollId&quot;: &quot;lukas&quot;,
+  &quot;enrollSecret&quot;: &quot;NPKYL39uKbkj&quot;
+}
+
+</code></pre>
+
+<p>Enrollment Response:</p>
+<pre><code>{
+    &quot;OK&quot;: &quot;Login successful for user 'lukas'.&quot;
+}
+</code></pre></div>
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+                <center>Copyright &copy; 2014-2016 <a href="https://wutongtree.com" target="_blank">wutongtree.com</a></center>
+            
+            <center>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</center>
+        </footer>
+
+        <script src="../js/jquery-1.10.2.min.js"></script>
+        <script src="../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../js/highlight.pack.js"></script>
+        <script>var base_url = '..';</script>
+        <script data-main="../mkdocs/js/search.js" src="../mkdocs/js/require.js"></script>
+        <script src="../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,25 @@
+site_name: 基于Hyperledger的基金管理
+site_url: https://wutongtree.github.io/funds/
+theme: simplex
+site_description: '基于Hyperledger的基金管理'
+
+docs_dir: markdowns
+site_dir: docs
+
+pages:
+- 首页: index.md
+- 功能描述: requirements.md
+- 设计实现: designs.md
+- 安装部署: deploy.md
+ 
+markdown_extensions:
+  - extra
+  - tables
+  - toc
+  - fenced_code
+  - smarty
+  - mdx_math:
+      enable_dollar_delimiter: True
+  - footnotes
+
+copyright: Copyright &copy; 2014-2016 <a href="https://wutongtree.com" target="_blank">wutongtree.com</a>
